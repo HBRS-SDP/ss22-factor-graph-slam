@@ -23,6 +23,9 @@
     - **lm** - links the code with C library
  - After running the above command, a.out file will be generated. Visualize the datapoints using the command `./a.out`
   
+## MakeFile
+  ToDo
+  
 ## Common errors and solutions
  
 - After ./a.out execution if there is an error stating `libgsl.so.25: cannot open shared object file`. Then, run the folllowing commands in the same path
