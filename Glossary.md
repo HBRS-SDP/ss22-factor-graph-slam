@@ -5,3 +5,7 @@
 - Bipartite graph
 - Marginal distribution
 - Belief propogation
+
+- Inference problem
+- Estimation problem
+- Optimation problem 
