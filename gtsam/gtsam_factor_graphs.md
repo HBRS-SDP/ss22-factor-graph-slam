@@ -24,7 +24,7 @@ the edges are always connected between different nodes
 
 ## Example elobration
 
-easyPoint2KalmanFilter.cpp
+### easyPoint2KalmanFilter.cpp
 
 ExtendedKalmanFilter 
 
@@ -33,3 +33,31 @@ classes inhertited
 -> NonlinearFactorGraph
 
 -> NonlinearFactor
+
+
+### ImuFactorExample.py
+
+#### sample data generation:
+
+- Data generator - scenario generator {
+	import gtsam
+	gtsam.ScenarioRunner()
+	}
+- preintegrationexample --> [gtsam have header called Scenario.h]
+
+- GTSAM have a scenario generator to test navigation examples {**Scenario.h**}
+
+- There are two types of scenarios available in GTSAM:
+	- constant twist scenario
+	- Accelerating scenario
+
+#### functions available in IMUfactor 
+
+- add prior 
+- optimize
+- plot 
+- run
+
+
+
+
