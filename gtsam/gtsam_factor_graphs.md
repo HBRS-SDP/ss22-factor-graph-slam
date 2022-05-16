@@ -50,11 +50,6 @@ While creating a factor graph we always use a variable, a noise model, a factor 
      *  wy Incremental pitch (about Y)
      *  wz Incremental yaw (about Z)
 
-## SFMExample_bal: same, but read data from read from BAL file
-
-## SelfCalibrationExample: Do SFM while also optimizing for calibration
-
-
 ### easyPoint2KalmanFilter.cpp
 
 ExtendedKalmanFilter 
