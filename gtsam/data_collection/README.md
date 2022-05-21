@@ -52,7 +52,7 @@
 rosrun image_transport republish compressed in:=/arm_cam3d/rgb/image_raw compressed out:=/device_0/sensor_1/Color_0/image
 ```
 
-- Now, the compressed images are being published by ```/device_0/sensor_1/Color_0/image``` topic. Edit the topic in aruco_detect launch file.
+- Now, the compressed images are being published by ```/device_0/sensor_1/Color_0/image``` topic. Edit the topic in aruco_detect launch file so that the aruco_detect subscribes to this topic.
 - Then, Launch aruco_detect using
 ```ros
 roslaunch aruco_detect aruco_detect.launch
