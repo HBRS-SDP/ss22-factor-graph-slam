@@ -11,3 +11,4 @@
 - Optimation problem 
 - Marginal covariance
 - levenberg-marquardt algorithm
+- non-linear least squares optimization
