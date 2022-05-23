@@ -10,3 +10,4 @@
 - Estimation problem
 - Optimation problem 
 - Marginal covariance
+- levenberg-marquardt algorithm
