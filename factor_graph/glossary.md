@@ -9,3 +9,4 @@
 - Inference problem
 - Estimation problem
 - Optimation problem 
+- Marginal covariance
