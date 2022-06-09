@@ -49,7 +49,8 @@
 
 - **aruco_detect** package requires compressed image topics to be published by the camera. But, in the recorded rosbag file we have uncompressed image. So, we need to compress the rosbag file using the command, <br>
 ```ros 
-rosrun image_transport republish compressed in:=/arm_cam3d/rgb/image_raw compressed out:=/device_0/sensor_1/Color_0/image
+<!-- rosrun image_transport republish compressed in:=/arm_cam3d/rgb/image_raw compressed out:=/device_0/sensor_1/Color_0/image -->
+rosrun image_transport republish raw in:=/arm_cam3d/rgb/image_raw compressed out:=/device_0/sensor_1/Color_0/image
 ```
 
 - Now, the compressed images are being published by ```/device_0/sensor_1/Color_0/image``` topic. Do the changes in aruco_detect launch file so that aruco_detect subscribes to this topic.

@@ -1,3 +1,6 @@
+from pickle import FALSE
+import time
+
 from pytz import common_timezones
 import rospy
 from std_msgs.msg import Float32
@@ -9,31 +12,25 @@ from csv import writer
 
 
 
-path = "sdp_look_one.csv"
+path = "/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_"+str(time.time())+".csv"
 count = 0
+cmd_cnt = 0
 flag_fidu = True
 flag_cmd = True
-common_access_flag = [False,False]
+rostime = None
+# common_access_flag = [True,True]
 data_to_write = []
 
 
-def data_writer():
+def data_writer(data_to_write):
 
-    global data_to_write
-    global cmd_vel
-    global common_access_flag
+    with open(path, 'a+') as f_object:
 
+        writer_object = writer(f_object)
+        writer_object.writerow(data_to_write)
+        f_object.close()
 
-    if common_access_flag[0] and common_access_flag[1] == True:
-
-        print("writing ....")
-
-        with open(path, 'a') as f_object:
-            writer_object = writer(f_object)
-            writer_object.writerow(data_to_write)
-            f_object.close()
-        common_access_flag = [False,False]
-        data_to_write = []
+    data_to_write = []
 
 
 def callback_fiducial_transform(msg):
@@ -43,9 +40,11 @@ def callback_fiducial_transform(msg):
     global flag_fidu
     global data_to_write
     global fiducial
+    global rostime
 
-   
-    data_dict = {#'frame_id' : [],
+    count += 1
+
+    data_dict = {'S.no' : [],
                 'aruco_id': [],
                 'Timestamp': [],
                 'score':[],
@@ -61,66 +60,65 @@ def callback_fiducial_transform(msg):
     header = msg.header
     rostime = datetime.fromtimestamp(header.stamp.secs)
 
-    if detections != [] and common_access_flag[0] == False :
-
-        if detections[0].results[0].score*100 > 95:
-
-            data = []
-
-            if flag_fidu:
-                data = list(data_dict.keys())
-                flag_fidu = False
-
-            else:
-
-                data.append(detections[0].results[0].id)
-                data.append(rostime)
-                data.append(detections[0].results[0].score)
-                data.append(detections[0].results[0].pose.pose.position.x)
-                data.append(detections[0].results[0].pose.pose.position.y)
-                data.append(detections[0].results[0].pose.pose.position.z)
-                data.append(detections[0].results[0].pose.pose.orientation.x)
-                data.append(detections[0].results[0].pose.pose.orientation.y)
-                data.append(detections[0].results[0].pose.pose.orientation.z)
-                data.append(detections[0].results[0].pose.pose.orientation.w)
-
-            for datum in data:
-                data_to_write.append(datum)
-
-            data = []
-            common_access_flag[0] = True
+    if flag_fidu:
+        data = list(data_dict.keys())
+        data_writer(data)
+        data = []
+        flag_fidu = False
 
 
+    if detections == []:
+
+        data = [count,0,rostime,0,0,0,0,0,0,0,0]
+        data_writer(data)
+
+
+    elif detections[0].results[0].score*100 > 10:
+
+        data = []
+
+        data.append(count)
+        data.append(detections[0].results[0].id)
+        data.append(rostime)
+        data.append(detections[0].results[0].score)
+        data.append(detections[0].results[0].pose.pose.position.x)
+        data.append(detections[0].results[0].pose.pose.position.y)
+        data.append(detections[0].results[0].pose.pose.position.z)
+        data.append(detections[0].results[0].pose.pose.orientation.x)
+        data.append(detections[0].results[0].pose.pose.orientation.y)
+        data.append(detections[0].results[0].pose.pose.orientation.z)
+        data.append(detections[0].results[0].pose.pose.orientation.w)
+
+        data_writer(data)
+        data = []
 
 def callback_cmd_vel(msg):
 
     global flag_cmd
-    global data_to_write
+    global cmd_cnt
 
-    if common_access_flag[0] == True and common_access_flag[1] == False:
+    data = []
+    if flag_cmd:
+
+        data = [count,0,rostime,0,0,0,0,0,0,0,0,'S.no','x_linear','y_linear','z_linear','x_angular','y_angular','z_angular']
+        flag_cmd = False
+        data_writer(data)
         data = []
-        if flag_cmd:
 
-            data = ['x_linear','y_linear','z_linear','x_angular','y_angular','z_angular']
-            flag_cmd = False
-        
-        else:
+    data = [count,0,rostime,0,0,0,0,0,0,0,0]
+    cmd_cnt += 1
+    data.append(cmd_cnt)
+    data.append(msg.linear.x)
+    data.append(msg.linear.y)
+    data.append(msg.linear.z)
 
-            data.append(msg.linear.x)
-            data.append(msg.linear.y)
-            data.append(msg.linear.z)
+    data.append(msg.angular.x)
+    data.append(msg.angular.y)
+    data.append(msg.angular.z)
 
-            data.append(msg.angular.x)
-            data.append(msg.angular.y)
-            data.append(msg.angular.z)
+    data_writer(data)
+    data = []
 
-        for datum in data:
-            data_to_write.append(datum)
-
-        data = []
-        
-        common_access_flag[1] = True
-        data_writer()
 
  
 def listener():
@@ -129,8 +127,8 @@ def listener():
     global cmd_vel
 
     rospy.init_node('getter', anonymous=False)
-    cmd_vel = rospy.Subscriber('/cmd_vel',Twist, callback_cmd_vel)
-    fiducial = rospy.Subscriber("/fiducial_transforms", Detection2DArray, callback_fiducial_transform)
+    cmd_vel = rospy.Subscriber('/cmd_vel',Twist, callback_cmd_vel,queue_size=25)
+    fiducial = rospy.Subscriber("/fiducial_transforms", Detection2DArray, callback_fiducial_transform,queue_size = 25)
 
     rospy.spin()
 
