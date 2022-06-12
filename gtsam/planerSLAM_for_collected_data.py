@@ -17,6 +17,7 @@ import pandas as pd
 import gtsam
 import numpy as np
 from gtsam.symbol_shorthand import L, X
+from sympy import O
 
 # Create noise models
 PRIOR_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.3, 0.3, 0.1]))
@@ -31,7 +32,7 @@ import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 from IPython.core.pylabtools import figsize, getfigs
 
-file_name = '/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/sdp_look_two_3_marker.csv'
+file_name = "/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_look_one_3_marker.csv"
 
 x_distance_step = None
 y_distance_step = None
@@ -144,10 +145,10 @@ def data_loader():
 
     my_data = np.genfromtxt(file_name, delimiter=',',skip_header=1)
     
-    x_distance_step = np.average(my_data[:,10]) / len(my_data[0])
-    y_distance_step = np.average(my_data[:,11]) / len(my_data[0])
+    x_distance_step = np.average(my_data[:,11]) / len(my_data[0]) #check if this is correct
+    y_distance_step = np.average(my_data[:,12]) / len(my_data[0]) #check if this is correct
 
-    my_data = np.delete(my_data,[1,2,10,11,12,13,14,15],1)
+    my_data = np.delete(my_data,[1,2,10,11,12,13,14,15],1) # delete columns 1,2,10,11,12,13,14,15 timestamp, score, x_distance, y_distance, z_distance, x_velocity, y_velocity, z_velocity
 
     return my_data
 
@@ -166,18 +167,19 @@ def yaw_angle_calculator(idx):
 def dict_generator():
 
     our_data = data_loader()
+ 
+    our_data = our_data[0::20] # take every 20th data point # to reduce the size of the data
+
     ids_in_data = our_data[:,0]
+
     LM_dict ={}
     cnt=0
     for i in ids_in_data:
         if(i not in list(dict.keys(LM_dict))):
             LM_dict[i]=cnt
             cnt+=1
-    print(LM_dict)
 
     return LM_dict, ids_in_data
-
-
 
 
 
@@ -200,6 +202,7 @@ def main():
     
     #Then connecting consecutive nodes using between factor pose 2
     for i in range(1, len(ids_in_data), 1):
+
         graph.add(gtsam.BetweenFactorPose2(X(i-1), X(i), gtsam.Pose2(0.00944, -0.09073, 0.0),ODOMETRY_NOISE))
         angle = yaw_angle_calculator(i)
         graph.add(gtsam.BearingRangeFactor2D(X(i), L(landmarks[ids_in_data[i]]), gtsam.Rot2.fromDegrees(angle),0, MEASUREMENT_NOISE))
@@ -232,6 +235,7 @@ def main():
     result = optimizer.optimize()
 
     final_data =np.zeros((len(ids_in_data),3))
+
     for i in range(len(ids_in_data)):
         final_data[i][0] = result.atPose2(X(i)).x()
         final_data[i][1] = result.atPose2(X(i)).y()
@@ -239,7 +243,7 @@ def main():
 
     # final_data.tofile('/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/final_data.csv',sep=',',format='%10.5f')
     
-    pd.DataFrame(final_data).to_csv('/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/final_data.csv',sep=',',index=False)
+    pd.DataFrame(final_data).to_csv('/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/planar_slam_output.csv',sep=',',index=False)
     print("\nFinal Result:\n{}".format(result))
 
     # Calculate and print marginal covariances for all variables
