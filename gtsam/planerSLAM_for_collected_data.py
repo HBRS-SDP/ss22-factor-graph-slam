@@ -19,18 +19,20 @@ import numpy as np
 from gtsam.symbol_shorthand import L, X
 from sympy import O
 
-# Create noise models
-PRIOR_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.3, 0.3, 0.1]))
-ODOMETRY_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.2, 0.2, 0.1]))
-MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.1, 0.2]))
-
-
 from typing import Sequence
 import numpy as np
 import numpy.linalg as linalg
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 from IPython.core.pylabtools import figsize, getfigs
+
+# Create noise models
+PRIOR_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.3, 0.3, 0.1]))
+ODOMETRY_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.2, 0.2, 0.1]))
+MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.1, 0.2]))
+
+
+
 
 file_name = "/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_look_one_3_marker.csv"
 
@@ -229,6 +231,7 @@ def main():
     # to use, and the amount of information displayed during optimization.
     # Here we will use the default set of parameters.  See the
     # documentation for the full set of parameters.
+
     params = gtsam.LevenbergMarquardtParams()
     optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimate,
                                                   params)
