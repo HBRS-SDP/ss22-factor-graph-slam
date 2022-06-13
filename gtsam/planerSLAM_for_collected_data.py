@@ -145,10 +145,12 @@ def data_loader():
     global x_distance_step
     global y_distance_step
 
-    my_data = np.genfromtxt(file_name, delimiter=',',skip_header=1)
+    my_data = np.genfromtxt(file_name, delimiter=',',skip_header=1) 
     
     x_distance_step = np.average(my_data[:,11]) / len(my_data[0]) #check if this is correct
     y_distance_step = np.average(my_data[:,12]) / len(my_data[0]) #check if this is correct
+
+    my_data = np.delete(my_data, [0], axis=1)
 
     my_data = np.delete(my_data,[1,2,10,11,12,13,14,15],1) # delete columns 1,2,10,11,12,13,14,15 timestamp, score, x_distance, y_distance, z_distance, x_velocity, y_velocity, z_velocity
 
@@ -158,10 +160,15 @@ def yaw_angle_calculator(idx):
 
     b_T_ccf = transforms()
     data = data_loader()
-    my_data = np.delete(data,0,1)
+
+    my_data = np.delete(data,0,1) # delete first column
+
     ccf_T_F_seq = get_homogeneous_transform(my_data[idx])
+
     b_T_F_seq = ccf_T_F_seq.dot(b_T_ccf)
+
     rotation = R.from_matrix(b_T_F_seq[0:3,0:3]) # rotation matrix of frame F relative to frame B
+
     yaw_angle = rotation.as_euler('xyz', degrees=True)[2]
 
     return yaw_angle
@@ -172,15 +179,24 @@ def dict_generator():
  
     our_data = our_data[0::20] # take every 20th data point # to reduce the size of the data
 
-    ids_in_data = our_data[:,0]
+    print(our_data)
+
+    ids_in_data = our_data[:,0] #`get the ids in the data
+
+    ids_in_data = [x for x in ids_in_data if str(x) != 'nan']
+
+    print(ids_in_data)
 
     LM_dict ={}
     cnt=0
+
     for i in ids_in_data:
+        if (np.isnan(i)):
+            continue
         if(i not in list(dict.keys(LM_dict))):
             LM_dict[i]=cnt
             cnt+=1
-
+    print(LM_dict)
     return LM_dict, ids_in_data
 
 
