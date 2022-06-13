@@ -251,12 +251,14 @@ def main():
 
     # Calculate and print marginal covariances for all variables
     # marginals = gtsam.Marginals(graph, result)
+
+
     # for (key, s) in [(X1, "X1"), (X2, "X2"), (X3, "X3"), (L1, "L1"),
     #                  (L2, "L2")]:
     #     print("{} covariance:\n{}\n".format(s,
     #                                         marginals.marginalCovariance(key)))
-    # graphviz_formatting = gtsam.GraphvizFormatting()
-    # graph.dot(result,writer=graphviz_formatting)
+    graphviz_formatting = gtsam.GraphvizFormatting()
+    graph.dot(result,writer=graphviz_formatting)
 
 
 if __name__ == "__main__":
