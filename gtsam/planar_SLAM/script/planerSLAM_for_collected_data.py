@@ -35,8 +35,7 @@ MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.1, 0.2]))
 
 
 
-file_name = "/home/tharun/Desktop/Semester_2/SDP/ss22-factor-graph-slam/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_look_one_3_marker.csv"
-
+file_name = "/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/sdp_data_collection_look_one_3_marker_full_loop_odom_fiducial.csv"
 x_distance_step = None
 y_distance_step = None
 
@@ -153,7 +152,7 @@ def data_loader():
 
     my_data = np.delete(my_data, [0], axis=1)
 
-    my_data = np.delete(my_data,[1,2,10,11,12,13,14,15],1) # delete columns 1,2,10,11,12,13,14,15 timestamp, score, x_distance, y_distance, z_distance, x_velocity, y_velocity, z_velocity
+    my_data = np.delete(my_data,[1,2],1) # delete columns 1,2,10,11,12,13,14,15 timestamp, score, x_distance, y_distance, z_distance, x_velocity, y_velocity, z_velocity
 
     return my_data
 
@@ -178,7 +177,7 @@ def dict_generator():
 
     our_data = data_loader()
  
-    our_data = our_data[0::50] # take every 20th data point # to reduce the size of the data
+    our_data = our_data[0::1] # take every 20th data point # to reduce the size of the data
 
     print(our_data)
 
@@ -214,18 +213,23 @@ def main():
     # Create an empty nonlinear factor graph
     graph = gtsam.NonlinearFactorGraph()
 
+    odom_data= data_loader()
+    odom_data= odom_data[:,[-3,-2,-1]]
+    print(odom_data)
     # Create the keys corresponding to unknown variables in the factor graph
 
     #First node with prior
+    odom = odom_data[0]
     G.add_edges_from([ ["X0", "L"+str(landmarks[ids_in_data[0]]) ] ])
-    graph.add(gtsam.PriorFactorPose2(X(0),gtsam.Pose2(0.0, 0.0, 0.0), PRIOR_NOISE))
+    graph.add(gtsam.PriorFactorPose2(X(0),gtsam.Pose2(odom[0],odom[1], odom[2]), PRIOR_NOISE))
     angle = yaw_angle_calculator(0)
     graph.add(gtsam.BearingRangeFactor2D(X(0), L(landmarks[ids_in_data[0]]), gtsam.Rot2.fromDegrees(angle),0, MEASUREMENT_NOISE))
     
     #Then connecting consecutive nodes using between factor pose 2
     for i in range(1, len(ids_in_data), 1):
+        odom=odom_data[i]-odom_data[i-1]
 
-        graph.add(gtsam.BetweenFactorPose2(X(i-1), X(i), gtsam.Pose2(0.00944, -0.09073, 0.0),ODOMETRY_NOISE))
+        graph.add(gtsam.BetweenFactorPose2(X(i-1), X(i), gtsam.Pose2(odom[0],odom[1], odom[2]),ODOMETRY_NOISE))
         angle = yaw_angle_calculator(i)
         graph.add(gtsam.BearingRangeFactor2D(X(i), L(landmarks[ids_in_data[i]]), gtsam.Rot2.fromDegrees(angle),0, MEASUREMENT_NOISE))
         G.add_edges_from([ ["X"+str(i-1),"X"+str(i)] ])
@@ -236,8 +240,9 @@ def main():
 
     # Create (deliberately inaccurate) initial estimate
     initial_estimate = gtsam.Values()
+    initial_estimate.insert(X(0), gtsam.Pose2(0.37,0.45,-0.15))
 
-    for i in range(len(ids_in_data)):
+    for i in range(1,len(ids_in_data)):
         initial_estimate.insert(X(i), gtsam.Pose2(x_distance_step*i, y_distance_step*i, 0.0))
     
     for i in range(len(list(dict.keys(landmarks)))):
@@ -266,9 +271,17 @@ def main():
 
     # final_data.tofile('/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/final_data.csv',sep=',',format='%10.5f')
     
-    pd.DataFrame(final_data).to_csv('/home/tharun/Desktop/Semester_2/SDP/ss22-factor-graph-slam/gtsam/planar_slam_output.csv',sep=',',index=False)
+    pd.DataFrame(final_data).to_csv('/home/tharun/Desktop/Semester_2/SDP/ss22-factor-graph-slam/python scripts/Data_for_testing/intial_estimate_planar_slam_output.csv',sep=',',index=False)
     print("\nFinal Result:\n{}".format(result))
 
+    # Calculate and print marginal covariances for all variables
+    # marginals = gtsam.Marginals(graph, result)
+    # for (key, s) in [(X1, "X1"), (X2, "X2"), (X3, "X3"), (L1, "L1"),
+    #                  (L2, "L2")]:
+    #     print("{} covariance:\n{}\n".format(s,
+    #                                         marginals.marginalCovariance(key)))
+    # graphviz_formatting = gtsam.GraphvizFormatting()
+    # graph.dot(result,writer=graphviz_formatting)
     print(landmarks)
     nx.draw(G, with_labels=True, cmap = plt.get_cmap('jet'))
     write_dot(G, '/home/tharun/Desktop/Semester_2/sample.dot')
