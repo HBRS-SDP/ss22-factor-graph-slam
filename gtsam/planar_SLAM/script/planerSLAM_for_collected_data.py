@@ -18,7 +18,8 @@ import gtsam
 import numpy as np
 from gtsam.symbol_shorthand import L, X
 from sympy import O
-
+import networkx as nx
+from networkx.drawing.nx_pydot import write_dot
 from typing import Sequence
 import numpy as np
 import numpy.linalg as linalg
@@ -34,10 +35,8 @@ MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.1, 0.2]))
 
 
 
-# file_name = "/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_look_one_3_marker.csv"
-# file_name = '/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_look_one_marker.csv'
-# file_name = '/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_look_one_two_marker_full_loop.csv'
-file_name = '/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_look_one_two_3_marker.csv'
+file_name = "/home/tharun/Desktop/Semester_2/SDP/ss22-factor-graph-slam/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_look_one_3_marker.csv"
+
 x_distance_step = None
 y_distance_step = None
 
@@ -179,7 +178,7 @@ def dict_generator():
 
     our_data = data_loader()
  
-    our_data = our_data[0::20] # take every 20th data point # to reduce the size of the data
+    our_data = our_data[0::50] # take every 20th data point # to reduce the size of the data
 
     print(our_data)
 
@@ -192,6 +191,7 @@ def dict_generator():
     LM_dict ={}
     cnt=0
 
+
     for i in ids_in_data:
         if (np.isnan(i)):
             continue
@@ -202,11 +202,12 @@ def dict_generator():
     return LM_dict, ids_in_data
 
 
-
 def main():
     """Main runner"""
     
     # Getting Landmarks:
+
+    G = nx.Graph()
 
     landmarks , ids_in_data = dict_generator()
 
@@ -216,6 +217,7 @@ def main():
     # Create the keys corresponding to unknown variables in the factor graph
 
     #First node with prior
+    G.add_edges_from([ ["X0", "L"+str(landmarks[ids_in_data[0]]) ] ])
     graph.add(gtsam.PriorFactorPose2(X(0),gtsam.Pose2(0.0, 0.0, 0.0), PRIOR_NOISE))
     angle = yaw_angle_calculator(0)
     graph.add(gtsam.BearingRangeFactor2D(X(0), L(landmarks[ids_in_data[0]]), gtsam.Rot2.fromDegrees(angle),0, MEASUREMENT_NOISE))
@@ -226,7 +228,8 @@ def main():
         graph.add(gtsam.BetweenFactorPose2(X(i-1), X(i), gtsam.Pose2(0.00944, -0.09073, 0.0),ODOMETRY_NOISE))
         angle = yaw_angle_calculator(i)
         graph.add(gtsam.BearingRangeFactor2D(X(i), L(landmarks[ids_in_data[i]]), gtsam.Rot2.fromDegrees(angle),0, MEASUREMENT_NOISE))
-        
+        G.add_edges_from([ ["X"+str(i-1),"X"+str(i)] ])
+        G.add_edges_from([ ["X"+str(i),"L"+str(landmarks[ids_in_data[i]]) ] ])
 
     # Print graph
     # print("Factor Graph:\n{}".format(graph))
@@ -249,7 +252,6 @@ def main():
     # to use, and the amount of information displayed during optimization.
     # Here we will use the default set of parameters.  See the
     # documentation for the full set of parameters.
-
     params = gtsam.LevenbergMarquardtParams()
     optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimate,
                                                   params)
@@ -264,20 +266,13 @@ def main():
 
     # final_data.tofile('/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/final_data.csv',sep=',',format='%10.5f')
     
-    pd.DataFrame(final_data).to_csv('/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/planar_slam_output'+'_look_one_two_3_marker'+'.csv',sep=',',index=False)
+    pd.DataFrame(final_data).to_csv('/home/tharun/Desktop/Semester_2/SDP/ss22-factor-graph-slam/gtsam/planar_slam_output.csv',sep=',',index=False)
     print("\nFinal Result:\n{}".format(result))
 
-    # Calculate and print marginal covariances for all variables
-    # marginals = gtsam.Marginals(graph, result)
-
-
-    # for (key, s) in [(X1, "X1"), (X2, "X2"), (X3, "X3"), (L1, "L1"),
-    #                  (L2, "L2")]:
-    #     print("{} covariance:\n{}\n".format(s,
-    #                                         marginals.marginalCovariance(key)))
-    # graphviz_formatting = gtsam.GraphvizFormatting()
-    # graph.dot(result,writer=graphviz_formatting)
-
+    print(landmarks)
+    nx.draw(G, with_labels=True, cmap = plt.get_cmap('jet'))
+    write_dot(G, '/home/tharun/Desktop/Semester_2/sample.dot')
+    plt.show()
 
 if __name__ == "__main__":
     main()
