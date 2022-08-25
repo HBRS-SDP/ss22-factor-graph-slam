@@ -28,7 +28,7 @@
         <cast_shadows>1</cast_shadows>
         <transparency>0</transparency>
       </visual>
-      <collision name='collision'>
+      <!-- <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
         <pose frame=''>0 0 0 0 -0 0</pose>
@@ -37,7 +37,7 @@
             <size>0.1778 0.1778 1e-05</size>
           </box>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
 
     <link name='marker_pad'>
@@ -65,7 +65,7 @@
         <cast_shadows>1</cast_shadows>
         <transparency>0</transparency>
       </visual>
-      <collision name='collision'>
+      <!-- <collision name='collision'>
         <laser_retro>0</laser_retro>
         <max_contacts>10</max_contacts>
         <pose frame=''>0 0 0 0 -0 0</pose>
@@ -74,7 +74,7 @@
             <size>0.1778 0.1778 1e-5</size>
           </box>
         </geometry>
-      </collision>
+      </collision> -->
     </link>
 
     <joint name='marker_JOINT_marker_pad' type='revolute'>
