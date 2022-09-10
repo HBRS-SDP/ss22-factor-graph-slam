@@ -117,3 +117,11 @@ s.print_factor(fa)
 ```
 s.print_variable(x4)
 ```
+
+### Graph Visualisation
+
+- To visualize the created factor graph use the method `print_graph` and it takes no arguments
+
+```
+s.print_graph()
+```
