@@ -52,13 +52,15 @@ def callback_tf(msg):
         data_writer(data_header)
         flag = False
 
-    data[1] =  msg.transforms[0].header.frame_id
-    data[2] =  msg.transforms[0].child_frame_id
-    data[3] =  msg.transforms[0].transform.translation.x
-    data[4] = msg.transforms[0].transform.translation.y
-    data[5] = msg.transforms[0].transform.translation.z
+    if(msg.transforms[0].child_frame_id[0]=="F"):
 
-    data_writer(data)
+        data[1] =  msg.transforms[0].header.frame_id
+        data[2] =  msg.transforms[0].child_frame_id
+        data[3] =  msg.transforms[0].transform.translation.x
+        data[4] = msg.transforms[0].transform.translation.y
+        data[5] = msg.transforms[0].transform.translation.z
+
+        data_writer(data)
  
 def listener():
 
