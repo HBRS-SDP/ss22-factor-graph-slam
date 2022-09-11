@@ -6,7 +6,7 @@
 
 ![Forney Factor Graph with representation of message passing](./Images%20and%20plots/pictures/readme_pictures/FFG.png)
 
-<caption><b>Forney Factor Graph with representation of message passing</b></caption>
+<p align = "center"><b>Forney Factor Graph with representation of message passing</b></p>
 
 </center>
 
@@ -21,7 +21,7 @@ SLAM problem solves two parts, **Localisation** (knowing where you are in the en
 <center>
 
 ![SLAM](./Images%20and%20plots/pictures/readme_pictures/slam.png)
-<caption><b>Simple SLAM example</b></caption>
+    <p align = "center"><b>Simple SLAM example</b></p>
 
 </center>
 
