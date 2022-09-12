@@ -1,18 +1,9 @@
-"""
-GTSAM Copyright 2010-2018, Georgia Tech Research Corporation,
-Atlanta, Georgia 30332-0415
-All Rights Reserved
-Authors: Frank Dellaert, et al. (see THANKS for the full author list)
-
-See LICENSE for the license information
-
-Simple robotics example using odometry measurements and bearing-range (laser) measurements
-Author: Alex Cunningham (C++), Kevin Deng & Frank Dellaert (Python)
-"""
 # pylint: disable=invalid-name, E1101
-
 from __future__ import print_function
+import math
 from tkinter import Y
+from turtle import color, distance
+from unittest.result import failfast
 import pandas as pd
 import gtsam
 import numpy as np
@@ -20,207 +11,110 @@ from gtsam.symbol_shorthand import L, X
 from sympy import O
 import networkx as nx
 from networkx.drawing.nx_pydot import write_dot
-from typing import Sequence
+from typing import Sequence, final
 import numpy as np
 import numpy.linalg as linalg
 import matplotlib.pyplot as plt
 from scipy.spatial.transform import Rotation as R
 from IPython.core.pylabtools import figsize, getfigs
+import time
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Create noise models
-PRIOR_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.03, 0.03, 0.01]))
-ODOMETRY_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.02, 0.02, 0.01]))
-MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.01, 0.02]))
+PRIOR_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.0005, 0.0003, 0.0001]))
+MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.1, 0.2]))
+ODOMETRY_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.0, 0.0, 0.0]))
 
+# file paths
+file_name = "/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/data_collection/Specific_data_files/sim_full_loop_tf.csv"
+output_path = "/ubuntu_disk/ravi/SDP/sim_test/output_files/"+'gtsam_output_'+'sim_full_loop.csv'
 
-
-file_name = "/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/one_all_marker.csv"
-# file_name = "/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/sdp_data_collection_look_one_3_marker_full_loop_odom_fiducial.csv"
-
-output_path = "/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/planar_SLAM/output_data/"+'gtsam_output'+'one_three_marker.csv'
-
-
-# file_name = "/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/sdp_data_collection_look_one_3_marker_full_loop_odom_fiducial.csv"
-x_distance_step = None
-y_distance_step = None
-
-
-def get_RX(theta: float) -> np.ndarray:
-    
-    cos = np.cos(theta)
-    sin = np.sin(theta)
-    Rx = np.array(((1,0,0),
-                   (0,cos,-sin),
-                   (0,sin,cos)))
-
-    return Rx
-
-def get_RY(theta: float) -> np.ndarray:
-    
-    cos = np.cos(theta)
-    sin = np.sin(theta)
-    Ry = np.array(((cos , 0  ,sin),
-                   ( 0  , 1  ,0),
-                   (-sin, 0  ,cos)))
-
-    return Ry
-
-def get_RZ(theta: float) -> np.ndarray:
-    
-    cos = np.cos(theta)
-    sin = np.sin(theta)
-    Rz = np.array(((cos , -sin  ,0),
-                   ( sin, cos  ,0),
-                   (0, 0  ,1)))
-
-    return Rz
-    
-def get_homogeneous_transform(input):
-
-    rotation_angles =np.array(input[3:6])
-    translation=np.array(input[0:3])
-    W=input[6]
-
-    rot = rotation_angles
-
-    Rx = get_RX(rot[2]) # rotation about X axis
-    Ry = get_RY(rot[1]) # rotation about Y axis
-    Rz = get_RZ(rot[0]) # rotation about Z axis
- 
-    h_stack = np.array([[0],[0],[0]])
-    v_stack = np.array([0,0,0,W])
-    Rotational_matrix = np.dot(Rz, np.dot(Ry, Rx)) 
-    
-    r = Rotational_matrix
-    r = np.hstack((r,h_stack))
-    r = np.vstack((r,v_stack))
-    
-    trans = np.array(([translation[0]],
-                      [translation[1]],
-                      [translation[2]]))
-    
-    Translational_matrix = np.array(((1,0,0),(0,1,0),(0,0,1)))
-
-    t = Translational_matrix
-    t = np.hstack((t,trans))
-    t = np.vstack((t,v_stack))
-    
-    H_matrix = t.dot(r)
-    
-    return H_matrix
-
-def transforms():
-    input = [0.239, 0.0, 0.071, 0.0, 0.0,0.0,1]
-    b_T_apl = get_homogeneous_transform(input)
-
-    input = [0,0,0,0,0,-0.38268343236488267, 0.9238795325113726]
-    apl_T_arl = get_homogeneous_transform(input)
-
-    input = [-0.022,0.0,0.037,0,0,0,1]
-    arl_T_a0 = get_homogeneous_transform(input)
-
-    input = [0.024,0.0,0.096,0.0,0.0,0.37421911645649647,0.9273403112549993]
-    a0_T_a1 = get_homogeneous_transform(input)
-
-    input = [0.033,0.0,0.019,0,0.528847175314683, 0.0, 0.8487170701486337]
-    a1_T_a2 = get_homogeneous_transform(input)
-
-    input = [0,0,0.155,0,-0.18396078610708805,0,0.9829335832979063]
-    a2_T_a3 = get_homogeneous_transform(input)
-
-    input = [0.0,0.0,0.135,0.0,0.722613797908215, 0, 0.6912519794348986]
-    a3_T_a4 = get_homogeneous_transform(input)
-
-    input = [-0.002, 0, 0.13 , 0,0, 0.7120631548522023,  0.7021154203561754]
-    a4_T_a5 = get_homogeneous_transform(input)
-    
-    input = [-0.005, -0.008,0.009,  -0.49999999999755174, -0.5,-0.5,  0.5000000000024483]
-    a5_T_cl = get_homogeneous_transform(input)
-    
-    input = [-0.000208392972126603, 0.014731519855558872,  0.00020157775725238025, -0.014435658231377602, -0.00020775734446942806, -0.0008906595758162439,  0.9998953938484192]
-    cl_T_ccf = get_homogeneous_transform(input)
-
-    b_T_ccf = cl_T_ccf.dot(a5_T_cl).dot(a4_T_a5).dot(a3_T_a4).dot(a2_T_a3).dot(a1_T_a2).dot(a0_T_a1).dot(arl_T_a0).dot(apl_T_arl).dot(b_T_apl)
-
-    return b_T_ccf
+loaded_data = None
 
 def data_loader():
     
     global file_name
     global x_distance_step
     global y_distance_step
+    global loaded_data
 
-    my_data = np.genfromtxt(file_name, delimiter=',', skip_header=0)
+    my_data = np.genfromtxt(file_name, delimiter=',', skip_header=1)
     
-    #delete all the rows in csv if the value in second column is nan
-    my_data = my_data[~np.isnan(my_data[:,1])]
+    # delete the row if the value in second column is nan
+    my_data = my_data[~np.isnan(my_data[:,2])]
 
-    print(file_name)
+    # delete first and second column
+    my_data = np.delete(my_data, [0,1], axis=1) # delete first column sno and frame_id
 
-    x_distance_step = np.average(my_data[:,11]) / len(my_data[0]) #check if this is correct
-    y_distance_step = np.average(my_data[:,12]) / len(my_data[0]) #check if this is correct
+    # ["aruco_id", "X","Y","Z","o_x","o_y","o_z"]
 
-    my_data = np.delete(my_data, [0], axis=1)
+    #X,Y,Z are in Aruco position
+    #o_x,o_y,o_z are in baseframe position from odom
 
-    my_data = np.delete(my_data,[1,2],1) # delete columns 1,2,10,11,12,13,14,15 timestamp, score, x_distance, y_distance, z_distance, x_velocity, y_velocity, z_velocity
+    np.delete(my_data, list(range(0, my_data.shape[0], 2)), axis=0)
 
+    loaded_data = my_data
     return my_data
 
-def yaw_angle_calculator(idx):
+def angle_calculator(idx):
 
-    b_T_ccf = transforms()
-    data = data_loader()
+    global loaded_data
+    data = loaded_data
+    
+    x = data[idx][1]
+    z = data[idx][3]
+    o_x = data[idx][4]
+    o_z = data[idx][6]
 
-    my_data = np.delete(data,0,1) # delete first column
+    x_arc = o_x - x
+    z_arc = o_z - z
 
-    ccf_T_F_seq = get_homogeneous_transform(my_data[idx])
+    angle = np.arctan2(z_arc,x_arc)
 
-    b_T_F_seq = ccf_T_F_seq.dot(b_T_ccf)
-
-    rotation = R.from_matrix(b_T_F_seq[0:3,0:3]) # rotation matrix of frame F relative to frame B
-
-    yaw_angle = rotation.as_euler('xyz', degrees=True)[2]
-
-    return yaw_angle
-
-
-def L2_norm_calculator(idx):
+    return angle
 
 
-    b_T_ccf = transforms()
-    data = data_loader()
+def distance_calculator(idx):
 
-    my_data = np.delete(data,0,1) # delete first column
 
-    ccf_T_F_seq = get_homogeneous_transform(my_data[idx])
+    global loaded_data
+    data = loaded_data
 
-    b_T_F_seq = ccf_T_F_seq.dot(b_T_ccf)
+    x = data[idx,1]
+    y = data[idx,2]
+    z = data[idx,3]
 
-    xyzw = b_T_F_seq[:,3]
+    o_x = data[idx,4]
+    o_y = data[idx,5]
+    o_z = data[idx,6]
 
-    xyz = xyzw[0:2]
+    x_arc = o_x - x
+    y_arc = o_y - y
+    z_arc = o_z - z
 
-    #find ecuclidean distance between origin and xyz
-    L2_norm = np.linalg.norm(xyz)
+    distance = np.sqrt(x_arc**2 + y_arc**2 + z_arc**2)
 
-    return L2_norm
+    return distance
 
+def initial_estimate_landmark(idx):
+    
+        estimate = { 0 :[2.457349769	,-2.476124194	,-0.005418868368],
+                    1 : [2.807765644	,-2.355438329	,-0.4103379515],
+                    3 : [1.771994398	,-4.437056738	,-1.002728486],
+                    2 : [3.084205077	,-3.829282619	,-0.7043568445],
+                    4 : [1.071734559	,-3.162029276	,-0.7192004394]}
+
+        return [estimate[idx][0], estimate[idx][1]]
 
 def dict_generator():
 
-    our_data = data_loader()
- 
-    print(our_data)
-
+    global loaded_data
+    our_data = loaded_data
     ids_in_data = our_data[:,0] #`get the ids in the data
-
     ids_in_data = [x for x in ids_in_data if str(x) != 'nan']
-
-    print(ids_in_data)
-
     LM_dict ={}
     cnt=0
-
 
     for i in ids_in_data:
         if (np.isnan(i)):
@@ -228,97 +122,164 @@ def dict_generator():
         if(i not in list(dict.keys(LM_dict))):
             LM_dict[i]=cnt
             cnt+=1
-    print(LM_dict)
     return LM_dict, ids_in_data
+
+
+def plotting(factor_data, odom_data, lbl_s, lbl_r,  clr_s, clr_r,  title):
+    
+    x_f = factor_data[:,0]
+    y_f = factor_data[:,1]
+
+    x_o = odom_data[:,1]
+    y_o = odom_data[:,2]
+
+  
+    fig, ax = plt.subplots(1,1,figsize=(20,20))
+    ax.scatter(x_o, y_o, label = lbl_r,color = 'orange',edgecolors='orange')
+    ax.scatter(x_f, y_f, label = lbl_s, color = 'black',edgecolors='black')
+    
+    ax.scatter(x_f[0], y_f[0], label = "Starting_position_FACTOR", marker="x", color='red', edgecolors='black')
+    ax.scatter(x_o[0], y_o[0], label = "Starting_position_ODOM", marker="x", color='cyan', edgecolors='orange')
+
+    ax.scatter(x_f[-1], y_f[-1], label = "Ending_position_FACTOR", marker="x", color='green', edgecolors='black')
+    ax.scatter(x_o[-1], y_o[-1], label = "Ending_position_ODOM", marker="x", color='magenta', edgecolors='orange')
+
+    plt.axis("equal")
+    plt.xlabel("X-axis (cm)",fontsize = 9)
+    plt.ylabel("Y-axis (cm)",fontsize =9)
+    plt.grid()
+    plt.legend(loc=1, prop={'size': 9})
+    
+    print("plotting done and saving the figure")
+    
+    plt.savefig('/ubuntu_disk/ravi/SDP/sim_test/Images/'+title +'_'+ str(time.time()) + ".png")
+
+    plt.show(block=False)
+    plt.pause(2)
+    plt.close()
 
 
 def main():
     """Main runner"""
     
-    # Getting Landmarks:
-
+    print("Loading data")
     G = nx.Graph()
-
-    landmarks , ids_in_data = dict_generator()
 
     # Create an empty nonlinear factor graph
     graph = gtsam.NonlinearFactorGraph()
 
     odom_data= data_loader()
     odom_data= odom_data[:,[-3,-2,-1]]
-    print(odom_data)
+
     # Create the keys corresponding to unknown variables in the factor graph
+    # Getting Landmarks:
+    landmarks , ids_in_data = dict_generator()
+
+    # finding the closest point to the end point
+    odom_data = data_loader()[:,[-3,-2,-1]]
+    min_distance = 1
+
+    for i in odom_data[0:200]:
+        if (np.linalg.norm(i-odom_data[-1]) < min_distance):
+            min_distance = np.linalg.norm(i-odom_data[-1])
+            closest_point = i
 
     #First node with prior
-    odom = odom_data[0]
+    print("Creating graph")
+
+    odom_initial = odom_data[0] #initial pose
     G.add_edges_from([ ["X0", "L"+str(landmarks[ids_in_data[0]]) ] ])
-    graph.add(gtsam.PriorFactorPose2(X(0),gtsam.Pose2(odom[0],odom[1], odom[2]), PRIOR_NOISE))
-    angle = yaw_angle_calculator(0)
-    graph.add(gtsam.BearingRangeFactor2D(X(0), L(landmarks[ids_in_data[0]]), gtsam.Rot2.fromDegrees(angle),L2_norm_calculator(0), MEASUREMENT_NOISE))
+    graph.add(gtsam.PriorFactorPose2(X(0),gtsam.Pose2(odom_initial[0],odom_initial[1], odom_initial[2]), PRIOR_NOISE))
+
+    angle = angle_calculator(0)
+    distance = distance_calculator(0)
+    graph.add(gtsam.BearingRangeFactor2D(X(0), L(landmarks[ids_in_data[0]]), gtsam.Rot2.fromDegrees(angle),distance, MEASUREMENT_NOISE))
     
     #Then connecting consecutive nodes using between factor pose 2
-    for i in range(1, len(ids_in_data), 1):
-        odom=odom_data[i]-odom_data[i-1]
+    for i in range(1, len(ids_in_data)):
+        if all(odom_data[i] == closest_point):
+            closest_point_idx = i
+            print("Closest point found at index: ", closest_point_idx)
 
+        odom=odom_data[i]-odom_data[i-1]
         graph.add(gtsam.BetweenFactorPose2(X(i-1), X(i), gtsam.Pose2(odom[0],odom[1], odom[2]),ODOMETRY_NOISE))
-        angle = yaw_angle_calculator(i)
-        graph.add(gtsam.BearingRangeFactor2D(X(i), L(landmarks[ids_in_data[i]]), gtsam.Rot2.fromDegrees(angle),L2_norm_calculator(i), MEASUREMENT_NOISE))
+        
+        angle = angle_calculator(i)
+        distance = distance_calculator(i)
+        graph.add(gtsam.BearingRangeFactor2D(X(i), L(landmarks[ids_in_data[i]]), gtsam.Rot2.fromDegrees(angle),distance, MEASUREMENT_NOISE))
+
         G.add_edges_from([ ["X"+str(i-1),"X"+str(i)] ])
         G.add_edges_from([ ["X"+str(i),"L"+str(landmarks[ids_in_data[i]]) ] ])
 
-    # Print graph
-    # print("Factor Graph:\n{}".format(graph))
 
-    # Create (deliberately inaccurate) initial estimate
+    # Loop closure
+    odom = None
+    odom = odom_data[0] - odom_data[i] 
+    graph.add(gtsam.BetweenFactorPose2(X(len(ids_in_data)-1), X(closest_point_idx), gtsam.Pose2(0.0,0.0,0.0),ODOMETRY_NOISE))
+    
+    # Create an initial estimate to the solution
+    print("Creating initial estimate")
     initial_estimate = gtsam.Values()
-    initial_estimate.insert(X(0), gtsam.Pose2(0.37,0.45,-0.15))
+
+    odom_x = odom_data[0][0]
+    odom_y = odom_data[0][1]
+    odom_theta = odom_data[0][2]
+
+    initial_estimate.insert(X(0), gtsam.Pose2(odom_x, odom_y, odom_theta))  
 
     for i in range(1,len(ids_in_data)):
-        initial_estimate.insert(X(i), gtsam.Pose2(x_distance_step*i, y_distance_step*i, 0.0))
+        odom=odom_data[i]
+        initial_estimate.insert(X(i), gtsam.Pose2(odom[0],odom[1],odom[2]))
     
     for i in range(len(list(dict.keys(landmarks)))):
-        initial_estimate.insert(L(i), gtsam.Point2(0.95, 0.1))
+        initial_estimate.insert(L(i), gtsam.Point2(initial_estimate_landmark(i)[0],initial_estimate_landmark(i)[1]))
 
-    # Print
-    # print("Initial Estimate:\n{}".format(initial_estimate))
+    epochs = 1
+    for epoch in range(epochs):
 
-    # Optimize using Levenberg-Marquardt optimization. The optimizer
-    # accepts an optional set of configuration parameters, controlling
-    # things like convergence criteria, the type of linear system solver
-    # to use, and the amount of information displayed during optimization.
-    # Here we will use the default set of parameters.  See the
-    # documentation for the full set of parameters.
-    
-    params = gtsam.LevenbergMarquardtParams()
-    optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimate,
-                                                  params)
-    result = optimizer.optimize()
+        print("Optimizing")
+        params = gtsam.LevenbergMarquardtParams()
+        optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimate,
+                                                    params)
+        result = optimizer.optimize()
 
-    final_data =np.zeros((len(ids_in_data),3))
+        final_data =np.zeros((len(ids_in_data),3))
 
-    for i in range(len(ids_in_data)):
-        final_data[i][0] = result.atPose2(X(i)).x()
-        final_data[i][1] = result.atPose2(X(i)).y()
-        final_data[i][2] = result.atPose2(X(i)).theta()
+        for i in range(len(ids_in_data)):
 
+            final_data[i][0] = result.atPose2(X(i)).x()
+            final_data[i][1] = result.atPose2(X(i)).y()
+            final_data[i][2] = result.atPose2(X(i)).theta()
+
+
+        initial_estimate = gtsam.Values()
+        initial_estimate.insert(X(0), gtsam.Pose2(odom_x, odom_y, odom_theta))
+
+        for i in range(1,len(ids_in_data)):
+            initial_estimate.insert(X(i), gtsam.Pose2(final_data[i][0],final_data[i][1], final_data[i][2]))
+            
+        for i in range(len(list(dict.keys(landmarks)))):
+            initial_estimate.insert(L(i), gtsam.Point2(initial_estimate_landmark(i)[0],initial_estimate_landmark(i)[1]))
+
+    print("saving data")
     pd.DataFrame(final_data).to_csv(output_path,sep=',',index=False)
-    # print("\nFinal Result:\n{}".format(result))
-
-    # Calculate and print marginal covariances for all variables
-    # marginals = gtsam.Marginals(graph, result)
-    # for (key, s) in [(X1, "X1"), (X2, "X2"), (X3, "X3"), (L1, "L1"),
-    #                  (L2, "L2")]:
-    #     print("{} covariance:\n{}\n".format(s,
-    #                                         marginals.marginalCovariance(key)))
-    # graphviz_formatting = gtsam.GraphvizFormatting()
-    # graph.dot(result,writer=graphviz_formatting)
-    # print(landmarks)
     nx.draw(G, with_labels=True, cmap = plt.get_cmap('jet'))
-    write_dot(G, '/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/planar_SLAM/output_data/sample.dot')
+    write_dot(G, '/ubuntu_disk/ravi/SDP/sim_test/output_files/factor_graph_sim.dot')
     plt.show()
+    print("Done")
 
-# if __name__ == "__main__":
-#     main()
+if __name__ == "__main__":
+    main()
+    gtsam_file = "/ubuntu_disk/ravi/SDP/sim_test/output_files/gtsam_output_sim_full_loop.csv"
+    odom_sim_data = "/ubuntu_disk/ravi/SDP/sim_test/extracted_data/sim_full_loop_odom.csv"
 
 
-dict_generator()
+    factor_data = np.genfromtxt(gtsam_file, skip_header=1, delimiter=',')
+    odom_data = np.genfromtxt(odom_sim_data, skip_header=1, delimiter=',')
+
+    plotting(factor_data, odom_data,
+            "factor motion", "odom motion",
+            clr_s = "blue", clr_r= "orange", 
+            title="factor vs odom")
+
+
