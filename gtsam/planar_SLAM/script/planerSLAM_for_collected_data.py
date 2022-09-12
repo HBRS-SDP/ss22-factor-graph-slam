@@ -27,8 +27,8 @@ MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.1, 0.2]))
 ODOMETRY_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.0, 0.0, 0.0]))
 
 # file paths
-file_name = "/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/data_collection/Specific_data_files/sim_full_loop_tf.csv"
-output_path = "/ubuntu_disk/ravi/SDP/sim_test/output_files/"+'gtsam_output_'+'sim_full_loop.csv'
+file_name = "data.csv"
+output_path = "output_data.csv'
 
 loaded_data = None
 
