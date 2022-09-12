@@ -28,14 +28,19 @@ from scipy.spatial.transform import Rotation as R
 from IPython.core.pylabtools import figsize, getfigs
 
 # Create noise models
-PRIOR_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.3, 0.3, 0.1]))
-ODOMETRY_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.2, 0.2, 0.1]))
-MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.1, 0.2]))
+PRIOR_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.03, 0.03, 0.01]))
+ODOMETRY_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.02, 0.02, 0.01]))
+MEASUREMENT_NOISE = gtsam.noiseModel.Diagonal.Sigmas(np.array([0.01, 0.02]))
 
 
 
+file_name = "/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/one_all_marker.csv"
+# file_name = "/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/sdp_data_collection_look_one_3_marker_full_loop_odom_fiducial.csv"
 
-file_name = "/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/sdp_data_collection_look_one_3_marker_full_loop_odom_fiducial.csv"
+output_path = "/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/planar_SLAM/output_data/"+'gtsam_output'+'one_three_marker.csv'
+
+
+# file_name = "/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/sdp_data_collection_look_one_3_marker_full_loop_odom_fiducial.csv"
 x_distance_step = None
 y_distance_step = None
 
@@ -145,8 +150,13 @@ def data_loader():
     global x_distance_step
     global y_distance_step
 
-    my_data = np.genfromtxt(file_name, delimiter=',',skip_header=1) 
+    my_data = np.genfromtxt(file_name, delimiter=',', skip_header=0)
     
+    #delete all the rows in csv if the value in second column is nan
+    my_data = my_data[~np.isnan(my_data[:,1])]
+
+    print(file_name)
+
     x_distance_step = np.average(my_data[:,11]) / len(my_data[0]) #check if this is correct
     y_distance_step = np.average(my_data[:,12]) / len(my_data[0]) #check if this is correct
 
@@ -173,12 +183,33 @@ def yaw_angle_calculator(idx):
 
     return yaw_angle
 
+
+def L2_norm_calculator(idx):
+
+
+    b_T_ccf = transforms()
+    data = data_loader()
+
+    my_data = np.delete(data,0,1) # delete first column
+
+    ccf_T_F_seq = get_homogeneous_transform(my_data[idx])
+
+    b_T_F_seq = ccf_T_F_seq.dot(b_T_ccf)
+
+    xyzw = b_T_F_seq[:,3]
+
+    xyz = xyzw[0:2]
+
+    #find ecuclidean distance between origin and xyz
+    L2_norm = np.linalg.norm(xyz)
+
+    return L2_norm
+
+
 def dict_generator():
 
     our_data = data_loader()
  
-    our_data = our_data[0::1] # take every 20th data point # to reduce the size of the data
-
     print(our_data)
 
     ids_in_data = our_data[:,0] #`get the ids in the data
@@ -223,7 +254,7 @@ def main():
     G.add_edges_from([ ["X0", "L"+str(landmarks[ids_in_data[0]]) ] ])
     graph.add(gtsam.PriorFactorPose2(X(0),gtsam.Pose2(odom[0],odom[1], odom[2]), PRIOR_NOISE))
     angle = yaw_angle_calculator(0)
-    graph.add(gtsam.BearingRangeFactor2D(X(0), L(landmarks[ids_in_data[0]]), gtsam.Rot2.fromDegrees(angle),0, MEASUREMENT_NOISE))
+    graph.add(gtsam.BearingRangeFactor2D(X(0), L(landmarks[ids_in_data[0]]), gtsam.Rot2.fromDegrees(angle),L2_norm_calculator(0), MEASUREMENT_NOISE))
     
     #Then connecting consecutive nodes using between factor pose 2
     for i in range(1, len(ids_in_data), 1):
@@ -231,7 +262,7 @@ def main():
 
         graph.add(gtsam.BetweenFactorPose2(X(i-1), X(i), gtsam.Pose2(odom[0],odom[1], odom[2]),ODOMETRY_NOISE))
         angle = yaw_angle_calculator(i)
-        graph.add(gtsam.BearingRangeFactor2D(X(i), L(landmarks[ids_in_data[i]]), gtsam.Rot2.fromDegrees(angle),0, MEASUREMENT_NOISE))
+        graph.add(gtsam.BearingRangeFactor2D(X(i), L(landmarks[ids_in_data[i]]), gtsam.Rot2.fromDegrees(angle),L2_norm_calculator(i), MEASUREMENT_NOISE))
         G.add_edges_from([ ["X"+str(i-1),"X"+str(i)] ])
         G.add_edges_from([ ["X"+str(i),"L"+str(landmarks[ids_in_data[i]]) ] ])
 
@@ -257,6 +288,7 @@ def main():
     # to use, and the amount of information displayed during optimization.
     # Here we will use the default set of parameters.  See the
     # documentation for the full set of parameters.
+    
     params = gtsam.LevenbergMarquardtParams()
     optimizer = gtsam.LevenbergMarquardtOptimizer(graph, initial_estimate,
                                                   params)
@@ -269,10 +301,8 @@ def main():
         final_data[i][1] = result.atPose2(X(i)).y()
         final_data[i][2] = result.atPose2(X(i)).theta()
 
-    # final_data.tofile('/home/tharun/Desktop/Semester_2/SDP/GTSAM/gtsam/python/gtsam/examples/csv_files/final_data.csv',sep=',',format='%10.5f')
-    
-    pd.DataFrame(final_data).to_csv('/home/tharun/Desktop/Semester_2/SDP/ss22-factor-graph-slam/python scripts/Data_for_testing/intial_estimate_planar_slam_output.csv',sep=',',index=False)
-    print("\nFinal Result:\n{}".format(result))
+    pd.DataFrame(final_data).to_csv(output_path,sep=',',index=False)
+    # print("\nFinal Result:\n{}".format(result))
 
     # Calculate and print marginal covariances for all variables
     # marginals = gtsam.Marginals(graph, result)
@@ -282,12 +312,13 @@ def main():
     #                                         marginals.marginalCovariance(key)))
     # graphviz_formatting = gtsam.GraphvizFormatting()
     # graph.dot(result,writer=graphviz_formatting)
-    print(landmarks)
+    # print(landmarks)
     nx.draw(G, with_labels=True, cmap = plt.get_cmap('jet'))
-    write_dot(G, '/home/tharun/Desktop/Semester_2/sample.dot')
+    write_dot(G, '/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/planar_SLAM/output_data/sample.dot')
     plt.show()
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     main()
 
 
+dict_generator()
