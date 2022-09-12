@@ -13,7 +13,7 @@ from csv import writer
 
 
 
-path = "/home/ravi/Desktop/Work/semester_2/sdp/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/sdp_data_collection_"+"look_one_3_marker"+".csv"
+path = "/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/data_collection/Extracted_data_from_bag_files/"+"one_three_marker"+".csv"
 count = 0
 cmd_cnt = 0
 flag = True

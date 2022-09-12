@@ -2,7 +2,6 @@ from cmath import nan
 from pickle import FALSE
 import time
 
-from pytz import common_timezones
 import rospy
 from std_msgs.msg import Float32
 from geometry_msgs.msg import Twist
@@ -14,7 +13,7 @@ from datetime import datetime
 from csv import writer
 
 
-path = "/media/ravi/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/data_collection/odom_data/sdp_data_collection_"+"two_full_loop_marker"+"_odom"+".csv"
+path = "/ubuntu_disk/ravi/SDP/Sdp_factor_graphs/gtsam/data_collection/odom_data/one_three_marker"+"_odom"+".csv"
 cmd_cnt = 0
 count = 0
 flag = True
