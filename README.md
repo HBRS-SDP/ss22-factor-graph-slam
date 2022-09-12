@@ -29,7 +29,6 @@ x1, x2 and x3 are nodes which are unknown locations
 l1 and l2 are the location of landmarks (which will be extracted from the environment using sensors)
 f1, f2, f3 are factors which defines the relationship between nodes and landmarks
 
-
 # Required libraries
 
 - [GTSAM](https://github.com/borglab/gtsam)
