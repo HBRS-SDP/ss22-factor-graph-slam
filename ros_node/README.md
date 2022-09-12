@@ -55,5 +55,5 @@ Where,
    *   qx, qy, qz are the orientation of the robot in the odom frame.
    *   Aruco ID is the ID of the aruco marker.  
 
-The Working flow of this node can be found in the below diagram (https://user-images.githubusercontent.com/91040217/189561751-023282ad-863a-496e-9067-88157e7d552f.svg)
+The Working flow of this node can be found in the below diagram [here](https://user-images.githubusercontent.com/91040217/189561751-023282ad-863a-496e-9067-88157e7d552f.svg)
 
