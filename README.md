@@ -61,3 +61,17 @@ $ sudo apt-get install cmake
 ```
 sudo apt-get install ros-noetic-aruco-detect
 ```
+
+# Planar SLAM implementation
+
+Using the GTSAM library, planar SLAM is implemented. This uses the data extracted from the robot's ros topics such as '/odom', '/tf'. From the topic '/odom', the robot's position can be found. From the topic '/tf', the aruco marker distance and orientation from the robot's baselink can be found. These are the two data required by the planar SLAM to estimate the robot's Position. The documentation can be found [here](https://github.com/HBRS-SDP/ss22-factor-graph-slam/tree/main/gtsam)
+
+# ROS node for SLAM using GTSAM
+
+A ROS node for SLAM is implemented using the GTSAM library and its source code and documentation can be found [here](https://github.com/HBRS-SDP/ss22-factor-graph-slam/tree/main/ros_node)
+
+# Forney factor graph (FFG)
+
+The generation and inferencing from the FFG is implemented in python. This allows the user to create a FFG with Boolean random variables and infer any variable from the created graph
+
+The modules (GTSAM not required) needed and the sample code for forney factor graph generation and inferecing can be found [here](https://github.com/HBRS-SDP/ss22-factor-graph-slam/tree/main/factor_graph)
