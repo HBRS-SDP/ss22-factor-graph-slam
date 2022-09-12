@@ -17,28 +17,26 @@ Note: A factor node can be connected to multiple variable nodes and vice versa b
 Formally, a factor graph is a bipartite graph F = (U, V, E) with two
 types of nodes: 
 
-*   factors ($φ_{i}$ ∈ U)
-*   variables ($x_{j}$ ∈ V)
+*   factors $(\phi_{i} ∈ U)$
+*   variables $(x_{j} ∈ V)$
 
 Edges $e_{ij}$ ∈ E are always between factor nodes and variables nodes. The set of variable
 nodes adjacent to a factor $φ_{i}$ is written in N $(φ_{i})$, and we write $X_{i}$
 for an assignment to this set. With these definitions, a factor graph F
 defines the **factorization of a global function φ(X)** as,
-\begin{equation}
-ϕ(X) = ∏\limits_{i} φ_{i}.(X_{i})
-\end{equation}
-
+$ϕ(X) = ∏\limits_{i} φ_{i}.(X_{i})$
 where $\prod$ represents the Joint probability distribution.
 
 In other words, the independence relationships are encoded by the edges
-$e_{ij}$ of the factor graph, with each factor $φ_{i}$ a function of only the variables $X_{i}$ in its adjacency set N ($φ_{i}$).
+$e_{ij}$ of the factor graph, with each factor $φ_{i}$ a function of only the variables $X_{i}$ in its adjacency set N $(φ_{i})$.
 
 
 **What does factorization of a global function means?**
 
-Consider a global function g(X), from the definition of factor graph it states, using factor graphs we can redefine the same global function g(X) as a product of smaller functions f(x). (i.e) 
-$$g(x_{1}...,x_{n}) = ∏\limits_{i} f_{i}.(S_{i}), where \space S_{i} ⊆ (x_{1}, x_{2},..x_{n})$$ 
-Here, $f_{i}.(S_{i})$ are functions depends on the subset of variables what g(X) depends on. For example, g(X) = g($x_{1}, x_{2},...x_{n}$), f(x) can be f($x_{1}, x_{3}, x_{5})$. 
+Consider a global function g(X), from the definition of factor graph it states, using factor graphs we can redefine the same global fun\begin{equation} ction g(X) as a product of smaller functions f(x). (i.e) 
+$$g (x_{1}...,x_{n}) = ∏ \limits_{i} f_{i}.(S_{i}), where S_{i} ⊆ (x_{1}, x_{2},..x_{n}) $$ 
+Here, $f_{i}.(S_{i})$ are functions depends on the subset of variables what g(X) depends on. 
+For example, $g(X) = g(x_{1}, x_{2},...x_{n})$ is the global function, the f(x) can be $f(x_{1}, x_{3}, x_{5})$ 
 
 
 # Representing Factor graphs:
@@ -50,12 +48,12 @@ Here, $f_{i}.(S_{i})$ are functions depends on the subset of variables what g(X)
 
 In conventional (or) original factor graphs, variable nodes are represented as circles and factor nodes are represented as square boxes. A simple factor graph representation is shown below,
 
-<center>
+<p align="center">
+ 
+ <img src= "../Images%20and%20plots/pictures/readme_pictures/simple_example_original_fg.png">
+</p> 
 
-![Fig 1: Simple factor graph representation](../Images%20and%20plots/pictures/readme_pictures/simple_example_original_fg.png)
-<caption><b> Simple (original)factor graph representation </b></caption>
-
-</center>
+ <h5 align="center">Simple (original)factor graph representation </h5>
 
 Here, $x_{1}, x_{2}, x_{3}$ are variable nodes and $f_{1}, f_{2}, f_{3}$ are factor nodes 
 
@@ -66,23 +64,23 @@ $$f(x_{1}, x_{2}, x_{3}) = f_{1}(x_{1}).f_{2}(x_{2},x_{1}).f_{3}(x_{3},x_{2})$$
 
 Some examples for converting graphs into (original)factor graphs,
 
-<center>
+<p align="center">
+ 
+  <img src="../Images%20and%20plots/pictures/readme_pictures/original_FG.png">
+</p> 
 
-![](../Images%20and%20plots/pictures/readme_pictures/original_FG.png)
 
-</center>
+<p align="center">
+ 
+  <img src="../Images%20and%20plots/pictures/readme_pictures/original_example_with_equation.png">
+</p> 
 
-<center>
 
-![](../Images%20and%20plots/pictures/readme_pictures/original_example_with_equation.png)
-
-</center>
 
 # Forney-style Factor Graph (FFG)
 
-Forney-style Factor Graphs are undirected graphs in which variable are represented as edges and factors associated with them are represented as nodes (shown in Figure 1).
+Forney-style Factor Graphs are undirected graphs in which variable are represented as edges and factors associated with them are represented as nodes.
 Basic assumptions to model FFG:
-
 
 *   A node for each factor
 *   An edge or half-edge for each variable
@@ -90,13 +88,12 @@ Basic assumptions to model FFG:
 * **No variable should appear in more than two factors**
 
 Forney-factor graph of the above figure can be defined as, 
-<center>
 
-![Fig 1: Simple FFG representation](../Images%20and%20plots/pictures/readme_pictures/simple_example_ffg.png)
-
-<caption><b> Simple FFG representation</b></caption>
-
-</center>
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/simple_example_ffg.png">
+</p> 
+ <h5 align="center">Simple FFG representation </h5>
 
 $$f(x_{1}, x_{2}, x_{3}) = f_{1}(x_{1}).f_{2}(x_{2},x_{1}).f_{3}(x_{3},x_{2})$$
 
@@ -124,32 +121,30 @@ where $$f_{=}(X,X',X") = δ(X-X').δ(X-X'')$$
 
 What it denotes is that, $$X=X'=X''$$
 
-**NOTE:**  $ \space δ - $ Dirac delta, where δ(0) = 1 
+**NOTE:**  $ δ $ - Dirac delta, where δ(0) = 1 
 
-- Variable X needs to be connected with three factors ($f_{3}, f_{4}, f_{5}$) but the problem is that it's not possible to draw edge connecting X with those factor nodes. Thus, an equality node which doesn't modify any assignments to the variables is introduced. The equality node provides a branching point for X to connect it with factors $f_{4}$ and $f_{5}$.
+- Variable X needs to be connected with three factors $(f_{3}, f_{4}, f_{5})$ but the problem is that it's not possible to draw edge connecting X with those factor nodes. Thus, an equality node which doesn't modify any assignments to the variables is introduced. The equality node provides a branching point for X to connect it with factors $f_{4}$ and $f_{5}$.
 
-<center>
-
-![equality_node_ffg.png](../Images%20and%20plots/pictures/readme_pictures/equality_node_ffg.png)
-<caption><b>FFG with equality nodes</b></caption>
-
-</center>
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/equality_node_ffg.png">
+</p> 
+ <h5 align="center">FFG with equality nodes</h5>
 
 ## Some examples for FFG
 
 $$ g(X_1,X_2,X_3) = f_1(X_1) f_2(X_1,X_2) f_3(X_1,X_2) f_4(X_2,X_3) $$
 
-<center>
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/ffg_notebook_example1.png">
+</p>
 
-![Example1](../Images%20and%20plots/pictures/readme_pictures/ffg_notebook_example1.png)
 
-</center>
-
-<center>
-
-![Example2](../Images%20and%20plots/pictures/readme_pictures/ffg_notebook_example2.png)
-
-</center>
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/ffg_notebook_example2.png">
+</p>
 
 Factorization equation for the above FFG, 
 
@@ -169,12 +164,13 @@ $$g(x_1,x_2..,x_7) = f_1(x_1).f_2(x_2).f_3(x_1,x_2,x_3).f_4(x_4).f_5(x_3,x_4,x_5
 
 Now, your task is to model a forney-style factor graph for the given SLAM toy example problem (feel free to use any online drawing tool). To make the task easier, the original factor graph version is represented below. 
 
-<center>
-    
-![Fig 4: A simple toy example for SLAM (Left) and its original factor graph version (Right)](../Images%20and%20plots/pictures/readme_pictures/slam.png)
-<caption> <b>A simple toy example for SLAM (Left) and its original factor graph version (Right) </b></caption>
 
-</center>
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/slam.png">
+ </p>
+
+ <h5 align = "center">A simple toy example for SLAM (Left) and its original factor graph version (Right) </h5>
 
 
 ## FFG version of the given graph
@@ -214,21 +210,25 @@ Inferencing is the process of finding the most probable state of the system. In 
 
 (b) If the leaf or terminal node has an half-edge (i.e variable alone) then the message from that terminal node 1 
 
-<center>
-    
-![terminal%20condition.png](../Images%20and%20plots/pictures/readme_pictures/terminal%20condition.png)
-<caption><b>Terminal conditions in FFG</b></caption>
 
-</center>
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/terminal%20condition.png">
+ </p>
+
+ <h5 align = "center">Terminal conditions in FFG</h5>
+
+
 
 (c) $\textbf{Message update rule:}$ For a node, outgoing message is calculated by product of all incoming messages followed by marginalizing it with respect to the variables in factor functions (except the outgoing variable). 
 
-<center>
-    
-![./message%20update%20rule.png](../Images%20and%20plots/pictures/readme_pictures/message%20update%20rule.png)    
-<caption><b> Sum-product update rule </b></caption>
 
-</center>
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/message%20update%20rule.png">
+ </p>
+
+ <h5 align = "center">Sum-product update rule </h5>
 
 Message update rule for the given FFG is given by,
 
@@ -236,12 +236,14 @@ $$\mu_{Y}(y) = \sum_{x_1,...x_n} \mu_{X_1}(x_1)...\mu_{X_n}(x_n). f(y,x_1..,x_n)
  
 # Message passing in simple FFG
 
-<center>
 
-![./message_passing.png](../Images%20and%20plots/pictures/readme_pictures/message_passing.png)
-<caption><b>Illustration of messsage passing in FFG</b></caption>
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/message_passing.png">
+ </p>
 
-</center>
+ <h5 align = "center">Illustration of messsage passing in FFG </h5>
+
 
 **NOTE:** FFG graphs are undirected graphs in general. In the above diagram, directed graphs are given for a better understanding of the underlying tree structure.
 
@@ -312,13 +314,14 @@ $$f(X_4) = \mu1_{X4}(X_4). \mu2_{X4}(X_4)$$
 
 SLAM problem solves two parts, **Localisation** (knowing where you are in the environmnet) and **Mapping** (How the environment looks). Factor graphs are one of the ways to solve the SLAM problem by modelling the unknown locations as nodes and their relationship between varibales or with environemnt objects (landmarks) as factors. Consider the simple SLAM problem below, 
 
-<center>
-    
-![SLAM](../Images%20and%20plots/pictures/readme_pictures/SLAM.png)   
-    
-<caption><b>Simple SLAM problem modelled as factor graph</b></caption>
+ 
+<p align="center">
+ 
+ <img src="../Images%20and%20plots/pictures/readme_pictures/SLAM.png">
+ </p>
 
-</center>
+ <h5 align = "center">Simple SLAM problem modelled as factor grap </h5>
+
 
 X1, X2 and X3 are nodes which are unknown locations 
 L1 and L2 are the location of landmarks (which will be extracted from the environment using sensors)
